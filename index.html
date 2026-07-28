@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temporizador de Boxe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-black:#15130D;
+    --ink-black-2:#1D1A12;
+    --canvas:#ECE1C8;
+    --canvas-2:#E1D3AD;
+    --leather:#A62A1C;
+    --leather-dark:#7A1E14;
+    --brass:#C79A3E;
+    --brass-dark:#8F6D26;
+    --rope:#6B6459;
+    --ink-cream:#F3ECDD;
+    --ink-cream-dim:#C9C0A9;
+    --danger:#C43B2A;
+    --success:#4C7A3E;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink-black);
+    background-image:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(199,154,62,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 700px at 50% 110%, rgba(0,0,0,0.5), transparent 60%);
+    color:var(--ink-cream);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:48px 20px 80px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.3em;
+    color:var(--brass);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    font-size:clamp(32px,6vw,56px);
+    letter-spacing:0.02em;
+    margin:0 0 6px;
+    color:var(--ink-cream);
+    text-align:center;
+  }
+  .subtitle{
+    color:var(--ink-cream-dim);
+    font-size:14px;
+    margin-bottom:40px;
+    text-align:center;
+  }
+  .card{
+    width:100%;
+    max-width:520px;
+    background:var(--canvas);
+    color:var(--ink-black);
+    border-radius:4px;
+    position:relative;
+    box-shadow:0 30px 60px rgba(0,0,0,0.45);
+  }
+  .ropes{
+    height:10px;
+    background:repeating-linear-gradient(
+      -45deg,
+      var(--leather) 0 14px,
+      var(--canvas-2) 14px 28px
+    );
+  }
+  .bell-wrap{
+    display:flex;
+    justify-content:center;
+    margin-top:-30px;
+    position:relative;
+    z-index:2;
+  }
+  .bell{
+    width:60px;height:60px;
+    background:var(--ink-black-2);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:3px solid var(--brass);
+    transform-origin:50% 15%;
+  }
+  .bell svg{width:28px;height:28px;}
+  .bell.ring{ animation: ringbell 0.6s ease; }
+  @keyframes ringbell{
+    0%{ transform:rotate(0deg); }
+    20%{ transform:rotate(-18deg); }
+    40%{ transform:rotate(14deg); }
+    60%{ transform:rotate(-9deg); }
+    80%{ transform:rotate(5deg); }
+    100%{ transform:rotate(0deg); }
+  }
+  .bell.ring{ box-shadow:0 0 0 6px rgba(199,154,62,0.25); }
+  @media (prefers-reduced-motion: reduce){
+    .bell.ring{ animation:none; }
+  }
+  .card-body{
+    padding:8px 36px 34px;
+    text-align:center;
+  }
+  .phase-pill{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    padding:5px 14px;
+    border-radius:999px;
+    background:var(--ink-black);
+    color:var(--brass);
+    margin-top:14px;
+  }
+  .round-counter{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--rope);
+    margin:10px 0 4px;
+  }
+  .timer{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(64px,16vw,110px);
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+    letter-spacing:0.01em;
+    margin:6px 0 14px;
+    color:var(--ink-black);
+    transition:color 0.2s ease;
+  }
+  .timer.warn{ color:var(--danger); }
+  .dots{
+    display:flex;
+    gap:7px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .dot{
+    width:11px;height:11px;border-radius:50%;
+    border:2px solid var(--rope);
+    background:transparent;
+  }
+  .dot.done{ background:var(--leather); border-color:var(--leather); }
+  .dot.current{ border-color:var(--brass); box-shadow:0 0 0 3px rgba(199,154,62,0.25); }
+  .progress-track{
+    height:6px;
+    background:var(--canvas-2);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:24px;
+  }
+  .progress-fill{
+    height:100%;
+    width:100%;
+    background:var(--leather);
+    transition:width 0.2s linear, background 0.3s ease;
+  }
+  .controls{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  button{
+    font-family:'Work Sans', sans-serif;
+    font-weight:500;
+    font-size:14px;
+    cursor:pointer;
+    border-radius:6px;
+    border:1.5px solid var(--ink-black);
+    background:transparent;
+    color:var(--ink-black);
+    padding:11px 18px;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    transition:transform 0.08s ease, background 0.15s ease;
+  }
+  button:hover{ background:rgba(0,0,0,0.06); }
+  button:active{ transform:scale(0.97); }
+  button:focus-visible{ outline:3px solid var(--brass); outline-offset:2px; }
+  button.primary{
+    background:var(--leather);
+    border-color:var(--leather);
+    color:var(--ink-cream);
+  }
+  button.primary:hover{ background:var(--leather-dark); }
+  button.icon-only{ padding:11px 13px; }
+  .hint{
+    font-size:12px;
+    color:var(--rope);
+    margin-bottom:0;
+  }
+  .hint b{ font-weight:600; color:var(--ink-black); }
+  .stool{
+    width:100%;
+    max-width:520px;
+    margin-top:26px;
+    background:var(--ink-black-2);
+    border:1px solid rgba(199,154,62,0.25);
+    border-radius:var(--radius);
+    padding:26px 28px 8px;
+  }
+  .stool-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin:0 0 18px;
+  }
+  .setting{ margin-bottom:20px; }
+  .setting-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    color:var(--ink-cream-dim);
+    margin-bottom:6px;
+  }
+  .setting-row span.val{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    color:var(--ink-cream);
+  }
+  input[type=range]{
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%;
+    height:4px;
+    border-radius:4px;
+    background:rgba(199,154,62,0.25);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--brass);
+    border:2px solid var(--ink-black-2);
+    cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--brass);
+    border:2px solid var(--ink-black-2);
+    cursor:pointer;
+  }
+  input[type=range]:disabled{ opacity:0.4; }
+  footer{
+    margin-top:34px;
+    font-size:12px;
+    color:var(--rope);
+    text-align:center;
+  }
+  .sr-only{
+    position:absolute; width:1px; height:1px;
+    padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+</style>
+</head>
+<body>
+
+<h2 class="sr-only">Temporizador de rounds de boxe com controle por barra de espaço, configuração de duração de round, descanso, número de rounds e preparação</h2>
+
+<div class="eyebrow">Córner</div>
+<h1>Temporizador de boxe</h1>
+<p class="subtitle">Aperte espaço pra iniciar. Ajuste o round no seu ritmo.</p>
+
+<div class="card">
+  <div class="ropes"></div>
+  <div class="bell-wrap">
+    <div class="bell" id="bell">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#C79A3E" stroke-width="1.8">
+        <path d="M12 2c-3.3 0-6 2.7-6 6v3.5c0 1.2-.5 2.3-1.4 3.1L3 16h18l-1.6-1.4c-.9-.8-1.4-1.9-1.4-3.1V8c0-3.3-2.7-6-6-6z"/>
+        <path d="M9.5 19a2.5 2.5 0 0 0 5 0"/>
+      </svg>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="phase-pill" id="phase-label">Preparação</div>
+    <div class="round-counter" id="round-counter">Round 1 de 5</div>
+    <div class="timer" id="timer-display">00:10</div>
+    <div class="dots" id="dots"></div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-bar"></div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="btn-start"><span id="start-icon">▶</span> <span id="start-label">Iniciar</span></button>
+      <button id="btn-skip">⏭ Pular</button>
+      <button id="btn-reset">↺ Reiniciar</button>
+      <button class="icon-only" id="btn-mute" aria-label="Alternar som">🔔</button>
+    </div>
+    <p class="hint">Aperte <b>espaço</b> para iniciar ou pausar</p>
+  </div>
+</div>
+
+<div class="stool">
+  <p class="stool-title">Ajustes do córner</p>
+  <div class="setting">
+    <div class="setting-row"><span>Duração do round</span><span class="val" id="round-dur-out">3:00</span></div>
+    <input type="range" id="round-dur" min="15" max="600" step="15" value="180">
+  </div>
+  <div class="setting">
+    <div class="setting-row"><span>Duração do descanso</span><span class="val" id="rest-dur-out">1:00</span></div>
+    <input type="range" id="rest-dur" min="0" max="300" step="15" value="60">
+  </div>
+  <div class="setting">
+    <div class="setting-row"><span>Número de rounds</span><span class="val" id="rounds-out">5</span></div>
+    <input type="range" id="rounds-count" min="1" max="15" step="1" value="5">
+  </div>
+  <div class="setting">
+    <div class="setting-row"><span>Preparação inicial</span><span class="val" id="prep-dur-out">10s</span></div>
+    <input type="range" id="prep-dur" min="0" max="60" step="5" value="10">
+  </div>
+</div>
+
+<footer>Feito para treino em casa ou na academia. Som via bipes sintetizados no navegador.</footer>
+
+<script>
+(function(){
+  var s = {
+    roundDur: 180, restDur: 60, rounds: 5, prepDur: 10,
+    currentRound: 1, phase: 'prep', remaining: 10,
+    running: false, phaseEnd: null, tickId: null, muted: false, lastBeep: null
+  };
+
+  var el = {
+    phaseLabel: document.getElementById('phase-label'),
+    roundCounter: document.getElementById('round-counter'),
+    timer: document.getElementById('timer-display'),
+    bar: document.getElementById('progress-bar'),
+    bell: document.getElementById('bell'),
+    dots: document.getElementById('dots'),
+    btnStart: document.getElementById('btn-start'),
+    startLabel: document.getElementById('start-label'),
+    startIcon: document.getElementById('start-icon'),
+    btnSkip: document.getElementById('btn-skip'),
+    btnReset: document.getElementById('btn-reset'),
+    btnMute: document.getElementById('btn-mute'),
+    roundDur: document.getElementById('round-dur'),
+    roundDurOut: document.getElementById('round-dur-out'),
+    restDur: document.getElementById('rest-dur'),
+    restDurOut: document.getElementById('rest-dur-out'),
+    roundsCount: document.getElementById('rounds-count'),
+    roundsOut: document.getElementById('rounds-out'),
+    prepDur: document.getElementById('prep-dur'),
+    prepDurOut: document.getElementById('prep-dur-out')
+  };
+
+  var audioCtx = null;
+  function ctx(){ if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } return audioCtx; }
+  function tone(freq, dur, type){
+    if(s.muted) return;
+    var c = ctx();
+    var o = c.createOscillator();
+    var g = c.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.35, c.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + dur);
+  }
+  function bell(){
+    tone(880, 0.6, 'sine');
+    setTimeout(function(){ tone(660, 0.6, 'sine'); }, 150);
+    el.bell.classList.remove('ring');
+    void el.bell.offsetWidth;
+    el.bell.classList.add('ring');
+  }
+  function beep(){ tone(1200, 0.12, 'square'); }
+
+  function fmt(sec){
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec/60), r = sec % 60;
+    return (m<10?'0':'') + m + ':' + (r<10?'0':'') + r;
+  }
+
+  function phaseTotal(){
+    if(s.phase==='prep') return s.prepDur || 1;
+    if(s.phase==='work') return s.roundDur;
+    if(s.phase==='rest') return s.restDur || 1;
+    return 1;
+  }
+
+  function renderDots(){
+    el.dots.innerHTML = '';
+    for(var i=1;i<=s.rounds;i++){
+      var d = document.createElement('div');
+      d.className = 'dot';
+      if(i < s.currentRound || (i===s.currentRound && s.phase==='rest')) d.className += ' done';
+      if(i === s.currentRound && s.phase!=='rest' && s.phase!=='done') d.className += ' current';
+      el.dots.appendChild(d);
+    }
+  }
+
+  function render(){
+    var labels = {prep:'Preparação', work:'Lutando', rest:'Descanso', done:'Treino finalizado'};
+    el.phaseLabel.textContent = labels[s.phase];
+    el.roundCounter.textContent = s.phase==='done' ? 'Bom trabalho' : ('Round ' + s.currentRound + ' de ' + s.rounds);
+    el.timer.textContent = fmt(s.remaining);
+
+    var total = phaseTotal();
+    var pct = total > 0 ? Math.max(0, (s.remaining/total) * 100) : 0;
+    el.bar.style.width = pct + '%';
+
+    var color = 'var(--leather)';
+    if(s.phase==='rest') color = 'var(--success)';
+    if(s.phase==='prep') color = 'var(--brass-dark)';
+    el.bar.style.background = color;
+
+    el.timer.classList.toggle('warn', s.remaining <= 3 && s.phase !== 'done');
+
+    el.startIcon.textContent = s.running ? '⏸' : '▶';
+    el.startLabel.textContent = s.running ? 'Pausar' : (s.phase==='done' ? 'Reiniciar' : 'Iniciar');
+    el.btnMute.textContent = s.muted ? '🔕' : '🔔';
+
+    [el.roundDur, el.restDur, el.roundsCount, el.prepDur].forEach(function(i){ i.disabled = s.running; });
+    renderDots();
+  }
+
+  function clearTick(){ if(s.tickId){ clearInterval(s.tickId); s.tickId = null; } }
+
+  function tick(){
+    var left = Math.round((s.phaseEnd - Date.now())/1000);
+    if(left <= 3 && left >= 1 && left !== s.lastBeep){ beep(); s.lastBeep = left; }
+    if(left <= 0){ advancePhase(); return; }
+    s.remaining = left;
+    render();
+  }
+
+  function advancePhase(){
+    bell();
+    if(s.phase==='prep'){
+      s.phase = 'work';
+      s.remaining = s.roundDur;
+    } else if(s.phase==='work'){
+      if(s.currentRound >= s.rounds){
+        s.phase = 'done';
+        s.running = false;
+        clearTick();
+        render();
+        return;
+      }
+      s.phase = 'rest';
+      s.remaining = s.restDur;
+    } else if(s.phase==='rest'){
+      s.currentRound += 1;
+      s.phase = 'work';
+      s.remaining = s.roundDur;
+    }
+    s.lastBeep = null;
+    s.phaseEnd = Date.now() + s.remaining * 1000;
+    render();
+  }
+
+  function start(){
+    if(s.phase==='done'){ reset(); }
+    ctx();
+    s.running = true;
+    s.phaseEnd = Date.now() + s.remaining * 1000;
+    clearTick();
+    s.tickId = setInterval(tick, 200);
+    render();
+  }
+
+  function pause(){
+    s.running = false;
+    clearTick();
+    render();
+  }
+
+  function toggle(){ s.running ? pause() : start(); }
+
+  function reset(){
+    clearTick();
+    s.currentRound = 1;
+    s.phase = 'prep';
+    s.remaining = s.prepDur;
+    s.running = false;
+    s.lastBeep = null;
+    render();
+  }
+
+  el.btnStart.addEventListener('click', toggle);
+  el.btnReset.addEventListener('click', reset);
+  el.btnSkip.addEventListener('click', function(){
+    if(s.phase==='done') return;
+    var wasRunning = s.running;
+    clearTick();
+    advancePhase();
+    if(wasRunning && s.phase!=='done'){
+      s.phaseEnd = Date.now() + s.remaining * 1000;
+      s.tickId = setInterval(tick, 200);
+    } else {
+      s.running = false;
+    }
+    render();
+  });
+  el.btnMute.addEventListener('click', function(){ s.muted = !s.muted; render(); });
+
+  el.roundDur.addEventListener('input', function(){
+    s.roundDur = parseInt(this.value, 10);
+    el.roundDurOut.textContent = fmt(s.roundDur);
+  });
+  el.restDur.addEventListener('input', function(){
+    s.restDur = parseInt(this.value, 10);
+    el.restDurOut.textContent = fmt(s.restDur);
+  });
+  el.roundsCount.addEventListener('input', function(){
+    s.rounds = parseInt(this.value, 10);
+    el.roundsOut.textContent = s.rounds;
+    render();
+  });
+  el.prepDur.addEventListener('input', function(){
+    s.prepDur = parseInt(this.value, 10);
+    el.prepDurOut.textContent = s.prepDur + 's';
+    if(s.phase==='prep' && !s.running){ s.remaining = s.prepDur; render(); }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.code === 'Space'){
+      var tag = (e.target && e.target.tagName) || '';
+      if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      e.preventDefault();
+      toggle();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
