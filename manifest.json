@@ -2,7 +2,7 @@
   "name": "Temporizador de Boxe",
   "short_name": "Boxe Timer",
   "description": "Temporizador de rounds de boxe com controle por barra de espa\u00E7o",
-  "start_url": "/temporizador-boxe/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#15130D",
   "theme_color": "#C79A3E",
