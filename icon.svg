@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="gloveGrad" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#E84A3A"/>
+      <stop offset="45%" stop-color="#C43B2A"/>
+      <stop offset="85%" stop-color="#8A2416"/>
+      <stop offset="100%" stop-color="#6A1A0E"/>
+    </radialGradient>
+    <radialGradient id="gloveGrad2" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#D63C2B"/>
+      <stop offset="100%" stop-color="#7A1E14"/>
+    </radialGradient>
+    <linearGradient id="cuffGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8A2416"/>
+      <stop offset="50%" stop-color="#6A1A0E"/>
+      <stop offset="100%" stop-color="#4A1008"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="innerShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur"/>
+      <feOffset dx="0" dy="1" result="offset"/>
+      <feComposite in="SourceGraphic" in2="offset" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Sombra externa -->
+  <ellipse cx="52" cy="88" rx="30" ry="6" fill="#000" opacity="0.25"/>
+
+  <!-- Punho (parte de baixo) -->
+  <path d="M28 65 C28 62 30 58 32 56 L32 56 C32 56 30 62 30 66 L30 76 C30 80 32 84 36 86 L54 86 C58 86 62 84 64 80 L66 74 C66 70 65 66 64 64 L64 56 C64 56 66 62 66 66 L66 76 C66 82 60 88 52 88 L36 88 C30 88 28 84 28 78 Z" fill="url(#cuffGrad)" filter="url(#shadow)"/>
+
+  <!-- Elástico do punho -->
+  <rect x="30" y="62" width="36" height="6" rx="2" fill="#5A1510" opacity="0.6"/>
+  <rect x="30" y="62" width="36" height="2" rx="1" fill="#C79A3E" opacity="0.4"/>
+  <rect x="30" y="66" width="36" height="2" rx="1" fill="#C79A3E" opacity="0.4"/>
+
+  <!-- Corpo principal da luva -->
+  <path d="M32 56 C30 50 28 42 30 34 C32 26 38 20 46 18 C52 16 58 18 62 22 C66 26 68 32 66 38 C64 44 60 50 56 54 C54 56 50 58 48 58 C42 58 36 56 32 56 Z" fill="url(#gloveGrad)" filter="url(#shadow)"/>
+
+  <!-- Dedo indicador/médio (primeira protuberância) -->
+  <path d="M46 18 C44 14 44 10 48 8 C50 7 54 8 56 10 C58 12 58 16 56 18 C54 20 50 20 46 18 Z" fill="url(#gloveGrad)" filter="url(#shadow)"/>
+
+  <!-- Dedo médio/anular (segunda protuberância) -->
+  <path d="M56 10 C58 6 62 4 64 6 C66 8 66 12 64 14 C62 16 58 16 56 14 C55 12 55 10 56 10 Z" fill="url(#gloveGrad2)" filter="url(#shadow)"/>
+
+  <!-- Polegar -->
+  <path d="M30 34 C26 32 22 34 20 38 C18 42 20 48 24 50 C28 52 30 50 32 48 C34 44 34 38 30 34 Z" fill="url(#gloveGrad)" filter="url(#shadow)"/>
+
+  <!-- Articulação do polegar -->
+  <path d="M22 38 C20 36 18 38 18 42 C18 44 20 46 22 46 C24 46 24 42 22 38 Z" fill="#D63C2B"/>
+
+  <!-- Costuras nos dedos (dourado) -->
+  <path d="M48 8 C50 6 54 6 56 8" stroke="#C79A3E" stroke-width="0.8" fill="none" opacity="0.6"/>
+  <path d="M58 6 C60 5 62 5 64 6" stroke="#C79A3E" stroke-width="0.8" fill="none" opacity="0.6"/>
+
+  <!-- Costura principal (dourado) -->
+  <path d="M38 55 C40 50 42 45 44 40 C46 35 48 30 48 25 C48 22 47 20 46 18" stroke="#C79A3E" stroke-width="1.2" fill="none" opacity="0.5" stroke-dasharray="2,2"/>
+
+  <!-- Detalhe do logo / vinco -->
+  <path d="M42 50 C44 46 48 44 52 46 C54 48 52 52 48 52 C44 52 42 50 42 50 Z" fill="#8A2416" opacity="0.3"/>
+
+  <!-- Destaque de luz (brilho) -->
+  <path d="M40 28 C42 24 44 22 46 22 C48 22 48 24 46 26 C44 28 42 30 40 28 Z" fill="#FFF" opacity="0.12"/>
+
+  <!-- Cadarço -->
+  <path d="M34 60 C36 58 38 58 40 60" stroke="#C79A3E" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <path d="M36 62 C38 60 40 60 42 62" stroke="#C79A3E" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <path d="M38 64 C40 62 42 62 44 64" stroke="#C79A3E" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+  <!-- Etiqueta do córner -->
+  <rect x="50" y="38" width="12" height="4" rx="1" fill="#C79A3E" opacity="0.35"/>
+  <line x1="52" y1="40" x2="60" y2="40" stroke="#FFF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="52" y1="39" x2="58" y2="39" stroke="#FFF" stroke-width="0.5" opacity="0.3"/>
+</svg>
