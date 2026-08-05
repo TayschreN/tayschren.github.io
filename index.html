@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Temporizador de Boxe</title>
+
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
@@ -268,6 +269,43 @@
     cursor:pointer;
   }
   input[type=range]:disabled{ opacity:0.4; }
+  .stats-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .stat-card{
+    background:var(--ink-black);
+    border:1px solid rgba(199,154,62,0.22);
+    border-radius:6px;
+    padding:13px 14px 12px;
+    text-align:left;
+  }
+  .stat-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--ink-cream-dim);
+    margin:0 0 6px;
+  }
+  .stat-value{
+    font-family:'Anton', sans-serif;
+    font-size:26px;
+    line-height:1;
+    letter-spacing:0.02em;
+    margin:0;
+    color:var(--ink-cream);
+  }
+  .stat-value.accent{ color:var(--brass); font-size:30px; }
+  .btn-stats{
+    font-size:12px;
+    padding:8px 14px;
+    border:1.5px solid var(--rope);
+    color:var(--rope);
+  }
+  .btn-stats:hover{ background:rgba(199,154,62,0.06); color:var(--ink-cream); }
   footer{
     margin-top:34px;
     font-size:12px;
@@ -337,6 +375,33 @@
   </div>
 </div>
 
+<div class="stool">
+  <p class="stool-title">Estatísticas do ringue</p>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <p class="stat-label">Tempo de hoje</p>
+      <p class="stat-value accent" id="stat-today">00:00</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Tempo total</p>
+      <p class="stat-value accent" id="stat-total">00:00</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Rounds concluídos</p>
+      <p class="stat-value" id="stat-rounds">0</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Sessões completas</p>
+      <p class="stat-value" id="stat-sessions">0</p>
+    </div>
+  </div>
+  <div class="setting-row">
+    <span>Tempo da sessão atual</span>
+    <span class="val" id="stat-current">00:00</span>
+  </div>
+  <button class="btn-stats" id="btn-reset-stats" type="button">↺ Zerar estatísticas</button>
+</div>
+
 <footer>Feito para treino em casa ou na academia. Som via bipes sintetizados no navegador.</footer>
 
 <script>
@@ -344,7 +409,12 @@
   var s = {
     roundDur: 180, restDur: 60, rounds: 5, prepDur: 10,
     currentRound: 1, phase: 'prep', remaining: 10,
-    running: false, phaseEnd: null, tickId: null, muted: false, lastBeep: null
+    running: false, phaseEnd: null, tickId: null, muted: false, lastBeep: null,
+    lastWork: null, workAcc: 0, sessionStart: null
+  };
+
+  var stats = {
+    todaySec: 0, todayDate: '', totalSec: 0, rounds: 0, sessions: 0
   };
 
   var el = {
@@ -367,7 +437,13 @@
     roundsCount: document.getElementById('rounds-count'),
     roundsOut: document.getElementById('rounds-out'),
     prepDur: document.getElementById('prep-dur'),
-    prepDurOut: document.getElementById('prep-dur-out')
+    prepDurOut: document.getElementById('prep-dur-out'),
+    statToday: document.getElementById('stat-today'),
+    statTotal: document.getElementById('stat-total'),
+    statRounds: document.getElementById('stat-rounds'),
+    statSessions: document.getElementById('stat-sessions'),
+    statCurrent: document.getElementById('stat-current'),
+    btnResetStats: document.getElementById('btn-reset-stats')
   };
 
   var audioCtx = null;
@@ -398,6 +474,61 @@
     sec = Math.max(0, Math.round(sec));
     var m = Math.floor(sec/60), r = sec % 60;
     return (m<10?'0':'') + m + ':' + (r<10?'0':'') + r;
+  }
+
+  function fmtDur(sec){
+    sec = Math.max(0, Math.floor(sec));
+    if(sec < 3600) return fmt(sec);
+    var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+    return h + 'h ' + (m<10?'0':'') + m + 'min';
+  }
+
+  var STORAGE_KEY = 'boxeTimerStats';
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  }
+  function loadStats(){
+    var raw = null;
+    try{ raw = JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){}
+    if(raw && typeof raw === 'object'){
+      stats.todaySec = +raw.todaySec || 0;
+      stats.todayDate = raw.todayDate || '';
+      stats.totalSec = +raw.totalSec || 0;
+      stats.rounds = +raw.rounds || 0;
+      stats.sessions = +raw.sessions || 0;
+    }
+    if(stats.todayDate !== todayKey()){ stats.todayDate = todayKey(); stats.todaySec = 0; }
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(stats)); }catch(e){}
+  }
+  function addWork(sec){
+    if(!sec) return;
+    if(stats.todayDate !== todayKey()){ stats.todayDate = todayKey(); stats.todaySec = 0; }
+    stats.todaySec += sec;
+    stats.totalSec += sec;
+  }
+  function renderStats(){
+    el.statToday.textContent = fmtDur(stats.todaySec);
+    el.statTotal.textContent = fmtDur(stats.totalSec);
+    el.statRounds.textContent = stats.rounds;
+    el.statSessions.textContent = stats.sessions;
+    el.statCurrent.textContent = fmtDur(s.workAcc);
+  }
+  function accrueWork(){
+    if(s.phase === 'work' && s.lastWork != null){
+      s.workAcc += (Date.now() - s.lastWork) / 1000;
+      s.lastWork = Date.now();
+    }
+  }
+  function commitSession(){
+    addWork(Math.floor(s.workAcc));
+    stats.sessions += 1;
+    saveStats();
+    s.workAcc = 0;
+    s.lastWork = null;
+    renderStats();
   }
 
   function phaseTotal(){
@@ -441,11 +572,13 @@
 
     [el.roundDur, el.restDur, el.roundsCount, el.prepDur].forEach(function(i){ i.disabled = s.running; });
     renderDots();
+    renderStats();
   }
 
   function clearTick(){ if(s.tickId){ clearInterval(s.tickId); s.tickId = null; } }
 
   function tick(){
+    accrueWork();
     var left = Math.round((s.phaseEnd - Date.now())/1000);
     if(left <= 3 && left >= 1 && left !== s.lastBeep){ beep(); s.lastBeep = left; }
     if(left <= 0){ advancePhase(); return; }
@@ -459,21 +592,27 @@
       s.phase = 'work';
       s.remaining = s.roundDur;
     } else if(s.phase==='work'){
+      stats.rounds += 1;
       if(s.currentRound >= s.rounds){
+        commitSession();
         s.phase = 'done';
         s.running = false;
         clearTick();
+        saveStats();
         render();
         return;
       }
       s.phase = 'rest';
       s.remaining = s.restDur;
+      saveStats();
     } else if(s.phase==='rest'){
       s.currentRound += 1;
       s.phase = 'work';
       s.remaining = s.roundDur;
     }
     s.lastBeep = null;
+    s.lastWork = null;
+    if(s.phase==='work'){ s.lastWork = Date.now(); }
     s.phaseEnd = Date.now() + s.remaining * 1000;
     render();
   }
@@ -482,6 +621,7 @@
     if(s.phase==='done'){ reset(); }
     ctx();
     s.running = true;
+    if(s.phase==='work' && s.lastWork == null){ s.lastWork = Date.now(); }
     s.phaseEnd = Date.now() + s.remaining * 1000;
     clearTick();
     s.tickId = setInterval(tick, 200);
@@ -489,6 +629,8 @@
   }
 
   function pause(){
+    accrueWork();
+    s.lastWork = null;
     s.running = false;
     clearTick();
     render();
@@ -498,6 +640,11 @@
 
   function reset(){
     clearTick();
+    accrueWork();
+    addWork(Math.floor(s.workAcc));
+    saveStats();
+    s.workAcc = 0;
+    s.lastWork = null;
     s.currentRound = 1;
     s.phase = 'prep';
     s.remaining = s.prepDur;
@@ -522,6 +669,14 @@
     render();
   });
   el.btnMute.addEventListener('click', function(){ s.muted = !s.muted; render(); });
+
+  el.btnResetStats.addEventListener('click', function(){
+    if(!confirm('Zerar todas as estatísticas? Isso não pode ser desfeito.')) return;
+    stats = { todaySec: 0, todayDate: todayKey(), totalSec: 0, rounds: 0, sessions: 0 };
+    saveStats();
+    renderStats();
+    render();
+  });
 
   el.roundDur.addEventListener('input', function(){
     s.roundDur = parseInt(this.value, 10);
@@ -551,6 +706,7 @@
     }
   });
 
+  loadStats();
   render();
 })();
 </script>
